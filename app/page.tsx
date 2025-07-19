@@ -2,7 +2,20 @@
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
-import { Upload, X, RotateCcw, Download, Sparkles, ArrowUp, ArrowDown, ChevronUp, ChevronDown } from "lucide-react";
+import {
+  Upload,
+  X,
+  RotateCcw,
+  Download,
+  Sparkles,
+  ArrowUp,
+  ArrowDown,
+  ChevronUp,
+  ChevronDown,
+  RotateCw,
+  Move,
+  Maximize,
+} from "lucide-react";
 import generate from "./action/generate";
 
 interface ImageItem {
@@ -12,6 +25,8 @@ interface ImageItem {
   y: number;
   width: number;
   height: number;
+  scale: number;
+  rotation: number; // in degrees
   img: HTMLImageElement;
 }
 
@@ -22,11 +37,21 @@ interface ContextMenu {
   imageId: string | null;
 }
 
+interface TransformHandle {
+  type: "scale" | "rotate";
+  x: number;
+  y: number;
+  size: number;
+}
+
 const Home = () => {
   const [images, setImages] = useState<ImageItem[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [draggedImage, setDraggedImage] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [transformMode, setTransformMode] = useState<"move" | "scale" | "rotate">("move");
+  const [initialTransform, setInitialTransform] = useState({ scale: 1, rotation: 0 });
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [enhancedResult, setEnhancedResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +63,30 @@ const Home = () => {
   });
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasSize = { width: 800, height: 600 };
+
+  const getTransformHandles = (image: ImageItem): TransformHandle[] => {
+    const centerX = image.x + (image.width * image.scale) / 2;
+    const centerY = image.y + (image.height * image.scale) / 2;
+    const handleSize = 8;
+    const rotateHandleDistance = 30;
+
+    return [
+      // Scale handles (corners)
+      {
+        type: "scale",
+        x: image.x + image.width * image.scale - handleSize / 2,
+        y: image.y + image.height * image.scale - handleSize / 2,
+        size: handleSize,
+      },
+      // Rotation handle (top center, extended)
+      {
+        type: "rotate",
+        x: centerX - handleSize / 2,
+        y: image.y - rotateHandleDistance,
+        size: handleSize,
+      },
+    ];
+  };
 
   const drawCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -53,17 +102,58 @@ const Home = () => {
     // Draw all images
     images.forEach(image => {
       if (image.img && image.img.complete) {
-        ctx.drawImage(image.img, image.x, image.y, image.width, image.height);
+        ctx.save();
 
-        // Draw border for dragged image
-        if (draggedImage === image.id) {
+        // Move to image center for rotation
+        const centerX = image.x + (image.width * image.scale) / 2;
+        const centerY = image.y + (image.height * image.scale) / 2;
+
+        ctx.translate(centerX, centerY);
+        ctx.rotate((image.rotation * Math.PI) / 180);
+        ctx.scale(image.scale, image.scale);
+
+        // Draw image centered
+        ctx.drawImage(image.img, -image.width / 2, -image.height / 2, image.width, image.height);
+
+        ctx.restore();
+
+        // Draw selection and transform handles
+        if (selectedImage === image.id) {
           ctx.strokeStyle = "#3b82f6";
           ctx.lineWidth = 2;
-          ctx.strokeRect(image.x, image.y, image.width, image.height);
+          ctx.setLineDash([5, 5]);
+
+          // Draw selection box
+          ctx.strokeRect(image.x, image.y, image.width * image.scale, image.height * image.scale);
+
+          ctx.setLineDash([]);
+
+          // Draw transform handles
+          const handles = getTransformHandles(image);
+          handles.forEach(handle => {
+            ctx.fillStyle = handle.type === "scale" ? "#3b82f6" : "#10b981";
+            ctx.fillRect(handle.x, handle.y, handle.size, handle.size);
+
+            // Add white border
+            ctx.strokeStyle = "#ffffff";
+            ctx.lineWidth = 1;
+            ctx.strokeRect(handle.x, handle.y, handle.size, handle.size);
+          });
+
+          // Draw rotation line
+          const rotateHandle = handles.find(h => h.type === "rotate");
+          if (rotateHandle) {
+            ctx.strokeStyle = "#10b981";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(image.x + (image.width * image.scale) / 2, image.y);
+            ctx.lineTo(rotateHandle.x + rotateHandle.size / 2, rotateHandle.y + rotateHandle.size / 2);
+            ctx.stroke();
+          }
         }
       }
     });
-  }, [images, draggedImage]);
+  }, [images, selectedImage]);
 
   useEffect(() => {
     drawCanvas();
@@ -105,6 +195,8 @@ const Home = () => {
             y: Math.random() * (canvasSize.height - height),
             width,
             height,
+            scale: 1,
+            rotation: 0,
             img,
           };
 
@@ -128,8 +220,26 @@ const Home = () => {
     // Check from top to bottom (reverse order since last drawn is on top)
     for (let i = images.length - 1; i >= 0; i--) {
       const image = images[i];
-      if (x >= image.x && x <= image.x + image.width && y >= image.y && y <= image.y + image.height) {
+      if (
+        x >= image.x &&
+        x <= image.x + image.width * image.scale &&
+        y >= image.y &&
+        y <= image.y + image.height * image.scale
+      ) {
         return image;
+      }
+    }
+    return null;
+  };
+
+  const getHandleAtPosition = (x: number, y: number, imageId: string): TransformHandle | null => {
+    const image = images.find(img => img.id === imageId);
+    if (!image) return null;
+
+    const handles = getTransformHandles(image);
+    for (const handle of handles) {
+      if (x >= handle.x && x <= handle.x + handle.size && y >= handle.y && y <= handle.y + handle.size) {
+        return handle;
       }
     }
     return null;
@@ -145,14 +255,37 @@ const Home = () => {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
+    // Check if clicking on a handle first
+    if (selectedImage) {
+      const handle = getHandleAtPosition(x, y, selectedImage);
+      if (handle) {
+        setTransformMode(handle.type);
+        setIsDragging(true);
+        setDraggedImage(selectedImage);
+
+        const image = images.find(img => img.id === selectedImage);
+        if (image) {
+          setInitialTransform({ scale: image.scale, rotation: image.rotation });
+          setDragOffset({ x, y });
+        }
+        return;
+      }
+    }
+
+    // Check if clicking on an image
     const clickedImage = getImageAtPosition(x, y);
     if (clickedImage) {
+      setSelectedImage(clickedImage.id);
       setIsDragging(true);
       setDraggedImage(clickedImage.id);
+      setTransformMode("move");
       setDragOffset({
         x: x - clickedImage.x,
         y: y - clickedImage.y,
       });
+    } else {
+      // Clicked on empty area, deselect
+      setSelectedImage(null);
     }
   };
 
@@ -166,22 +299,58 @@ const Home = () => {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
+    const image = images.find(img => img.id === draggedImage);
+    if (!image) return;
+
     setImages(prev =>
-      prev.map(img =>
-        img.id === draggedImage
-          ? {
+      prev.map(img => {
+        if (img.id !== draggedImage) return img;
+
+        switch (transformMode) {
+          case "move":
+            return {
               ...img,
-              x: Math.max(0, Math.min(x - dragOffset.x, canvasSize.width - img.width)),
-              y: Math.max(0, Math.min(y - dragOffset.y, canvasSize.height - img.height)),
-            }
-          : img
-      )
+              x: Math.max(0, Math.min(x - dragOffset.x, canvasSize.width - img.width * img.scale)),
+              y: Math.max(0, Math.min(y - dragOffset.y, canvasSize.height - img.height * img.scale)),
+            };
+
+          case "scale":
+            const centerX = img.x + (img.width * img.scale) / 2;
+            const centerY = img.y + (img.height * img.scale) / 2;
+            const initialDistance = Math.sqrt(
+              Math.pow(dragOffset.x - centerX, 2) + Math.pow(dragOffset.y - centerY, 2)
+            );
+            const currentDistance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
+            const scaleMultiplier = currentDistance / initialDistance;
+            const newScale = Math.max(0.1, Math.min(3, initialTransform.scale * scaleMultiplier));
+
+            return {
+              ...img,
+              scale: newScale,
+            };
+
+          case "rotate":
+            const imageCenterX = img.x + (img.width * img.scale) / 2;
+            const imageCenterY = img.y + (img.height * img.scale) / 2;
+            const angle = Math.atan2(y - imageCenterY, x - imageCenterX);
+            const degrees = (angle * 180) / Math.PI + 90; // +90 to make top = 0 degrees
+
+            return {
+              ...img,
+              rotation: degrees,
+            };
+
+          default:
+            return img;
+        }
+      })
     );
   };
 
   const handleMouseUp = () => {
     setIsDragging(false);
     setDraggedImage(null);
+    setTransformMode("move");
     setDragOffset({ x: 0, y: 0 });
   };
 
@@ -222,8 +391,19 @@ const Home = () => {
     }
   };
 
+  const updateImageTransform = (id: string, updates: Partial<Pick<ImageItem, "scale" | "rotation">>) => {
+    setImages(prev => prev.map(img => (img.id === id ? { ...img, ...updates } : img)));
+  };
+
+  const resetImageTransform = (id: string) => {
+    updateImageTransform(id, { scale: 1, rotation: 0 });
+  };
+
   const removeImage = (id: string) => {
     setImages(prev => prev.filter(img => img.id !== id));
+    if (selectedImage === id) {
+      setSelectedImage(null);
+    }
   };
 
   const moveToFront = (id: string) => {
@@ -280,6 +460,7 @@ const Home = () => {
 
   const clearCanvas = () => {
     setImages([]);
+    setSelectedImage(null);
     setEnhancedResult(null);
     setError(null);
   };
@@ -334,13 +515,15 @@ const Home = () => {
     document.body.removeChild(link);
   };
 
+  const selectedImageData = selectedImage ? images.find(img => img.id === selectedImage) : null;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">AI-Powered Collage Creator</h1>
-          <p className="text-gray-600">Create collages and enhance them with AI for professional results</p>
+          <p className="text-gray-600">Create, transform, and enhance collages with AI for professional results</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -368,19 +551,83 @@ const Home = () => {
               </div>
             </div>
 
+            {/* Transform Controls */}
+            {selectedImageData && (
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">Transform Controls</h2>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Scale: {selectedImageData.scale.toFixed(2)}x
+                    </label>
+                    <input
+                      type="range"
+                      min="0.1"
+                      max="3"
+                      step="0.1"
+                      value={selectedImageData.scale}
+                      onChange={e => updateImageTransform(selectedImageData.id, { scale: parseFloat(e.target.value) })}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <span>0.1x</span>
+                      <span>3x</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Rotation: {Math.round(selectedImageData.rotation)}°
+                    </label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="360"
+                      value={selectedImageData.rotation}
+                      onChange={e =>
+                        updateImageTransform(selectedImageData.id, { rotation: parseFloat(e.target.value) })
+                      }
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <span>0°</span>
+                      <span>360°</span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => resetImageTransform(selectedImageData.id)}
+                    className="w-full flex items-center justify-center gap-2 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg transition-colors"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    Reset Transform
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Image List */}
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Images ({images.length})</h2>
               <div className="space-y-2 max-h-60 overflow-y-auto">
                 {images.map((image, index) => (
-                  <div key={image.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                  <div
+                    key={image.id}
+                    className={`flex items-center justify-between p-2 rounded-lg transition-colors ${
+                      selectedImage === image.id ? "bg-blue-50 border border-blue-200" : "bg-gray-50"
+                    }`}
+                    onClick={() => setSelectedImage(image.id)}
+                  >
                     <img src={image.src} alt="Thumbnail" className="w-10 h-10 object-cover rounded" />
                     <span className="text-sm text-gray-600 flex-1 ml-2 truncate">
                       Layer {images.length - index} • {image.id.slice(0, 6)}
                     </span>
                     <div className="flex items-center gap-1">
                       <button
-                        onClick={() => moveForward(image.id)}
+                        onClick={e => {
+                          e.stopPropagation();
+                          moveForward(image.id);
+                        }}
                         disabled={index === images.length - 1}
                         className="text-gray-400 hover:text-gray-600 p-1 disabled:opacity-30"
                         title="Move forward"
@@ -388,7 +635,10 @@ const Home = () => {
                         <ChevronUp className="h-3 w-3" />
                       </button>
                       <button
-                        onClick={() => moveBackward(image.id)}
+                        onClick={e => {
+                          e.stopPropagation();
+                          moveBackward(image.id);
+                        }}
                         disabled={index === 0}
                         className="text-gray-400 hover:text-gray-600 p-1 disabled:opacity-30"
                         title="Move backward"
@@ -396,7 +646,10 @@ const Home = () => {
                         <ChevronDown className="h-3 w-3" />
                       </button>
                       <button
-                        onClick={() => removeImage(image.id)}
+                        onClick={e => {
+                          e.stopPropagation();
+                          removeImage(image.id);
+                        }}
                         className="text-red-500 hover:text-red-700 p-1"
                         title="Remove image"
                       >
@@ -446,7 +699,8 @@ const Home = () => {
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Canvas</h2>
               <p className="text-sm text-gray-600 mb-4">
-                Click and drag to move images. Double-click to remove. Right-click for layer options.
+                Click to select. Drag to move. Use corner handle to scale, top handle to rotate. Right-click for
+                options.
               </p>
               <div className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50 relative">
                 <canvas
@@ -471,6 +725,17 @@ const Home = () => {
                       top: contextMenu.y,
                     }}
                   >
+                    <button
+                      onClick={() => {
+                        resetImageTransform(contextMenu.imageId!);
+                        setContextMenu({ visible: false, x: 0, y: 0, imageId: null });
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                      Reset Transform
+                    </button>
+                    <hr className="my-1" />
                     <button
                       onClick={() => moveToFront(contextMenu.imageId!)}
                       className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
@@ -583,8 +848,8 @@ const Home = () => {
                 2
               </div>
               <div>
-                <h3 className="font-medium text-gray-800">Arrange & Layer</h3>
-                <p>Drag images to position them. Right-click for layer options</p>
+                <h3 className="font-medium text-gray-800">Transform & Layer</h3>
+                <p>Select, move, scale, rotate. Use handles or sidebar controls</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
