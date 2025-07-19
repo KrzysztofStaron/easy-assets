@@ -681,7 +681,7 @@ const Home = () => {
                 <div className="flex gap-2">
                   <input
                     type="text"
-                    placeholder="Search for images (e.g., nature, business, food)"
+                    placeholder="tree, gorilla, T-Rex etc."
                     value={pexelsSearch}
                     onChange={e => setPexelsSearch(e.target.value)}
                     onKeyPress={e => e.key === "Enter" && searchPexels()}
@@ -694,7 +694,6 @@ const Home = () => {
                     className="px-4 py-2 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 text-white rounded-lg transition-colors disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     <Search className="h-4 w-4" />
-                    {isSearchingPexels ? "..." : "Search"}
                   </button>
                 </div>
 
