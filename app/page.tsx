@@ -15,8 +15,9 @@ import {
   RotateCw,
   Move,
   Maximize,
+  Lightbulb,
 } from "lucide-react";
-import generate from "./action/generate";
+import generate, { analyzeCollage } from "./action/generate";
 
 interface ImageItem {
   id: string;
@@ -55,12 +56,17 @@ const Home = () => {
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [enhancedResult, setEnhancedResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [isApplyingSuggestion, setIsApplyingSuggestion] = useState(false);
   const [contextMenu, setContextMenu] = useState<ContextMenu>({
     visible: false,
     x: 0,
     y: 0,
     imageId: null,
   });
+  const [enhancementPrompt, setEnhancementPrompt] = useState("");
+  const [editPrompt, setEditPrompt] = useState("");
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasSize = { width: 800, height: 600 };
 
@@ -463,6 +469,7 @@ const Home = () => {
     setSelectedImage(null);
     setEnhancedResult(null);
     setError(null);
+    setSuggestions([]);
   };
 
   const downloadCanvas = () => {
@@ -477,6 +484,29 @@ const Home = () => {
     document.body.removeChild(link);
   };
 
+  const applySuggestion = async (suggestion: string) => {
+    if (!enhancedResult) {
+      setError("Please enhance the collage first before applying suggestions");
+      return;
+    }
+
+    setIsApplyingSuggestion(true);
+    setError(null);
+
+    try {
+      const enhancedPrompt = `Apply this specific improvement to the image: "${suggestion}". Make precise adjustments while maintaining the overall quality and composition of the professional asset.`;
+
+      const result = await generate(enhancedResult, enhancedPrompt);
+      setEnhancedResult(result);
+      setEditPrompt(""); // Clear edit prompt when suggestion is applied
+    } catch (err) {
+      console.error("Suggestion application error:", err);
+      setError(err instanceof Error ? err.message : "Failed to apply suggestion");
+    } finally {
+      setIsApplyingSuggestion(false);
+    }
+  };
+
   const enhanceCollage = async () => {
     const canvas = canvasRef.current;
     if (!canvas || images.length === 0) return;
@@ -489,12 +519,25 @@ const Home = () => {
       // Get the canvas as a data URL
       const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
 
-      // Enhanced prompt for professional asset creation
+      // Use user's custom prompt or default prompt
       const prompt =
-        "Transform this collage into a professional, high-quality digital asset with enhanced colors, perfect lighting, crisp details, and polished composition. Make it look like a premium marketing material with vibrant colors and studio-quality finish.";
+        enhancementPrompt.trim() ||
+        "Transform this collage into a professional, high-quality digital asset with enhanced colors, perfect lighting, crisp details, and polished composition. Make it look like a premium marketing material with vibrant colors and studio-quality finish. Many components will be porly pasted by user, so use the collage as a base, if things have a background there is more chance that it is pasted by user, so make sure to use the collage as a base and enhance it.";
 
       const result = await generate(dataUrl, prompt);
       setEnhancedResult(result);
+
+      // Automatically analyze the enhanced output image for suggestions
+      setIsAnalyzing(true);
+      try {
+        const aiSuggestions = await analyzeCollage(result);
+        setSuggestions(aiSuggestions || []);
+      } catch (analysisErr) {
+        console.error("Auto-analysis error:", analysisErr);
+        // Don't set error state for analysis failure, as enhancement succeeded
+      } finally {
+        setIsAnalyzing(false);
+      }
     } catch (err) {
       console.error("Enhancement error:", err);
       setError(err instanceof Error ? err.message : "Failed to enhance collage");
@@ -515,6 +558,24 @@ const Home = () => {
     document.body.removeChild(link);
   };
 
+  const editGeneratedImage = async () => {
+    if (!enhancedResult || !editPrompt.trim()) return;
+
+    setIsEnhancing(true);
+    setError(null);
+
+    try {
+      const result = await generate(enhancedResult, editPrompt.trim());
+      setEnhancedResult(result);
+      setEditPrompt(""); // Clear the edit prompt after successful edit
+    } catch (err) {
+      console.error("Edit error:", err);
+      setError(err instanceof Error ? err.message : "Failed to edit image");
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
+
   const selectedImageData = selectedImage ? images.find(img => img.id === selectedImage) : null;
 
   return (
@@ -523,7 +584,9 @@ const Home = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">AI-Powered Collage Creator</h1>
-          <p className="text-gray-600">Create, transform, and enhance collages with AI for professional results</p>
+          <p className="text-gray-600">
+            Create, transform, and enhance collages with AI intelligence and professional results
+          </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -606,6 +669,35 @@ const Home = () => {
               </div>
             )}
 
+            {/* AI Suggestions */}
+            {suggestions.length > 0 && (
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <Lightbulb className="h-5 w-5 text-yellow-500" />
+                  AI Suggestions
+                </h2>
+                <p className="text-xs text-gray-500 mb-3 italic">Generated automatically after enhancement</p>
+                <div className="space-y-3">
+                  {suggestions.map((suggestion, index) => (
+                    <button
+                      key={index}
+                      onClick={() => applySuggestion(suggestion)}
+                      disabled={!enhancedResult || isApplyingSuggestion}
+                      className="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <div className="text-sm font-medium text-gray-800 mb-1">Suggestion {index + 1}</div>
+                      <div className="text-xs text-gray-600">{suggestion}</div>
+                    </button>
+                  ))}
+                  {!enhancedResult && (
+                    <p className="text-xs text-gray-500 italic">
+                      Enhance your collage first to apply these suggestions
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Image List */}
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Images ({images.length})</h2>
@@ -667,14 +759,6 @@ const Home = () => {
               <h2 className="text-xl font-semibold text-gray-800 mb-4">Actions</h2>
               <div className="space-y-3">
                 <button
-                  onClick={enhanceCollage}
-                  disabled={images.length === 0 || isEnhancing}
-                  className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:bg-gray-300 text-white py-2 px-4 rounded-lg transition-colors disabled:cursor-not-allowed"
-                >
-                  <Sparkles className="h-4 w-4" />
-                  {isEnhancing ? "Enhancing..." : "AI Enhance"}
-                </button>
-                <button
                   onClick={clearCanvas}
                   disabled={images.length === 0}
                   className="w-full flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 disabled:bg-gray-300 text-white py-2 px-4 rounded-lg transition-colors disabled:cursor-not-allowed"
@@ -697,11 +781,35 @@ const Home = () => {
           {/* Canvas Area */}
           <div className="lg:col-span-3 relative">
             <div className="bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Canvas</h2>
-              <p className="text-sm text-gray-600 mb-4">
-                Click to select. Drag to move. Use corner handle to scale, top handle to rotate. Right-click for
-                options.
-              </p>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-800">Canvas</h2>
+                  <p className="text-sm text-gray-600">
+                    Click to select. Drag to move. Use corner handle to scale, top handle to rotate. Right-click for
+                    options.
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex flex-col gap-1">
+                    <input
+                      type="text"
+                      placeholder="Custom enhancement prompt (optional)"
+                      value={enhancementPrompt}
+                      onChange={e => setEnhancementPrompt(e.target.value)}
+                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      disabled={isEnhancing}
+                    />
+                  </div>
+                  <button
+                    onClick={enhanceCollage}
+                    disabled={images.length === 0 || isEnhancing}
+                    className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:bg-gray-300 text-white py-3 px-6 rounded-lg transition-colors disabled:cursor-not-allowed shadow-lg"
+                  >
+                    <Sparkles className="h-5 w-5" />
+                    {isEnhancing ? "Generating..." : "Generate"}
+                  </button>
+                </div>
+              </div>
               <div className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50 relative">
                 <canvas
                   ref={canvasRef}
@@ -780,12 +888,16 @@ const Home = () => {
               </div>
             </div>
 
-            {/* Loading State */}
-            {isEnhancing && (
+            {/* Loading States */}
+            {(isEnhancing || isAnalyzing || isApplyingSuggestion) && (
               <div className="mt-6 bg-white rounded-xl shadow-lg p-6">
                 <div className="flex items-center justify-center space-x-3">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-                  <span className="text-gray-600">AI is enhancing your collage...</span>
+                  <span className="text-gray-600">
+                    {isEnhancing && "AI is enhancing your collage..."}
+                    {isAnalyzing && "AI is analyzing your collage..."}
+                    {isApplyingSuggestion && "Applying AI suggestion..."}
+                  </span>
                 </div>
               </div>
             )}
@@ -796,7 +908,7 @@ const Home = () => {
                 <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-lg">
                   <div className="flex">
                     <div className="ml-3">
-                      <h3 className="text-sm font-medium text-red-800">Enhancement Error</h3>
+                      <h3 className="text-sm font-medium text-red-800">Error</h3>
                       <div className="mt-2 text-sm text-red-700">
                         <p>{error}</p>
                       </div>
@@ -822,8 +934,36 @@ const Home = () => {
                 <div className="border border-gray-200 rounded-lg overflow-hidden">
                   <img src={enhancedResult} alt="AI Enhanced Collage" className="w-full h-auto" />
                 </div>
+
+                {/* Edit Controls */}
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                  <h3 className="text-lg font-medium text-gray-800 mb-3">Edit Generated Image</h3>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="text"
+                      placeholder="Describe what you want to change..."
+                      value={editPrompt}
+                      onChange={e => setEditPrompt(e.target.value)}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      disabled={isEnhancing}
+                    />
+                    <button
+                      onClick={editGeneratedImage}
+                      disabled={!editPrompt.trim() || isEnhancing}
+                      className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white py-2 px-4 rounded-lg transition-colors disabled:cursor-not-allowed"
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      {isEnhancing ? "Editing..." : "Edit"}
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    You can edit this image as many times as you want. Each edit builds on the previous result.
+                  </p>
+                </div>
+
                 <p className="text-sm text-gray-600 mt-4">
-                  Your collage has been transformed into a professional-quality asset using AI!
+                  Your collage has been transformed into a professional-quality asset using AI! Use the suggestions
+                  above to refine it further.
                 </p>
               </div>
             )}
@@ -833,7 +973,7 @@ const Home = () => {
         {/* Instructions */}
         <div className="mt-8 bg-white rounded-xl shadow-lg p-6">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">How to Use</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-gray-600">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 text-sm text-gray-600">
             <div className="flex items-start gap-3">
               <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
                 1
@@ -858,7 +998,7 @@ const Home = () => {
               </div>
               <div>
                 <h3 className="font-medium text-gray-800">AI Enhance</h3>
-                <p>Click "AI Enhance" to transform into professional asset</p>
+                <p>Add custom prompt & click Generate + get auto-suggestions</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -866,8 +1006,17 @@ const Home = () => {
                 4
               </div>
               <div>
-                <h3 className="font-medium text-gray-800">Download</h3>
-                <p>Save your original or enhanced high-quality result</p>
+                <h3 className="font-medium text-gray-800">Edit & Refine</h3>
+                <p>Use suggestions or custom edits to perfect your result</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                5
+              </div>
+              <div>
+                <h3 className="font-medium text-gray-800">Download & Share</h3>
+                <p>Save your professional-quality enhanced collage</p>
               </div>
             </div>
           </div>

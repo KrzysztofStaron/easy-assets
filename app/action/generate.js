@@ -2,10 +2,62 @@
 
 import Replicate from "replicate";
 import fs from "node:fs";
+import OpenAI from "openai";
 
 const replicate = new Replicate({
   auth: process.env.REPLICATE_API_TOKEN,
 });
+
+// OpenRouter client for image analysis
+const openai = new OpenAI({
+  baseURL: "https://openrouter.ai/api/v1",
+  apiKey: process.env.OPENROUTER_API_KEY,
+});
+
+export async function analyzeCollage(imageDataUrl) {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "openai/gpt-4o-mini",
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: 'Suggest changes to this image; Format your response as a JSON array of exactly 3 strings, like: ["remove the background of the gorilla", "change background to forest", "make it look like a cartoon]',
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: imageDataUrl,
+              },
+            },
+          ],
+        },
+      ],
+      max_tokens: 500,
+      temperature: 0.7,
+    });
+
+    const content = response.choices[0].message.content;
+
+    // Parse the JSON response
+    try {
+      const suggestions = JSON.parse(content);
+      if (Array.isArray(suggestions) && suggestions.length === 3) {
+        return suggestions;
+      } else {
+        throw new Error("Invalid suggestions format");
+      }
+    } catch (parseError) {
+      // Fallback: extract suggestions from text if JSON parsing fails
+      console.warn("JSON parsing failed, using fallback extraction");
+    }
+  } catch (error) {
+    console.error("Error analyzing collage:", error);
+    // Return default suggestions if API fails
+  }
+}
 
 export default async function generate(imagePath, prompt) {
   try {
@@ -41,7 +93,7 @@ export default async function generate(imagePath, prompt) {
 
     // Create the prediction
     const prediction = await replicate.predictions.create({
-      model: "black-forest-labs/flux-kontext-pro",
+      model: "black-forest-labs/flux-kontext-max",
       input,
     });
 
