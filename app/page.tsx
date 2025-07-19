@@ -16,6 +16,7 @@ import {
   Move,
   Maximize,
   Lightbulb,
+  Search,
 } from "lucide-react";
 import generate, { analyzeCollage } from "./action/generate";
 
@@ -67,6 +68,9 @@ const Home = () => {
   });
   const [enhancementPrompt, setEnhancementPrompt] = useState("");
   const [editPrompt, setEditPrompt] = useState("");
+  const [pexelsSearch, setPexelsSearch] = useState("");
+  const [isSearchingPexels, setIsSearchingPexels] = useState(false);
+  const [pexelsResults, setPexelsResults] = useState<any[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasSize = { width: 800, height: 600 };
 
@@ -576,6 +580,62 @@ const Home = () => {
     }
   };
 
+  const searchPexels = async () => {
+    if (!pexelsSearch.trim()) return;
+
+    setIsSearchingPexels(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/pexels?query=${encodeURIComponent(pexelsSearch.trim())}`);
+      const data = await response.json();
+
+      if (response.ok) {
+        setPexelsResults(data.photos || []);
+      } else {
+        throw new Error(data.error || "Failed to search Pexels");
+      }
+    } catch (err) {
+      console.error("Pexels search error:", err);
+      setError(err instanceof Error ? err.message : "Failed to search Pexels");
+    } finally {
+      setIsSearchingPexels(false);
+    }
+  };
+
+  const addPexelsImage = (imageUrl: string) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const aspectRatio = img.width / img.height;
+      const maxSize = 200;
+      let width = maxSize;
+      let height = maxSize;
+
+      if (aspectRatio > 1) {
+        height = maxSize / aspectRatio;
+      } else {
+        width = maxSize * aspectRatio;
+      }
+
+      const newImage: ImageItem = {
+        id: Math.random().toString(36).substr(2, 9),
+        src: imageUrl,
+        x: Math.random() * (canvasSize.width - width),
+        y: Math.random() * (canvasSize.height - height),
+        width,
+        height,
+        scale: 1,
+        rotation: 0,
+        img,
+      };
+
+      setImages(prev => [...prev, newImage]);
+      setSelectedImage(newImage.id);
+    };
+    img.src = imageUrl;
+  };
+
   const selectedImageData = selectedImage ? images.find(img => img.id === selectedImage) : null;
 
   return (
@@ -609,6 +669,58 @@ const Home = () => {
                   <div>
                     <p className="text-gray-600 mb-2">Drag & drop images here, or click to select</p>
                     <p className="text-sm text-gray-400">Supports JPG, PNG, GIF, WebP</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Pexels Search */}
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Search Pexels</h2>
+              <div className="space-y-4">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Search for images (e.g., nature, business, food)"
+                    value={pexelsSearch}
+                    onChange={e => setPexelsSearch(e.target.value)}
+                    onKeyPress={e => e.key === "Enter" && searchPexels()}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    disabled={isSearchingPexels}
+                  />
+                  <button
+                    onClick={searchPexels}
+                    disabled={!pexelsSearch.trim() || isSearchingPexels}
+                    className="px-4 py-2 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 text-white rounded-lg transition-colors disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    <Search className="h-4 w-4" />
+                    {isSearchingPexels ? "..." : "Search"}
+                  </button>
+                </div>
+
+                {pexelsResults.length > 0 && (
+                  <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto">
+                    {pexelsResults.map(photo => (
+                      <div
+                        key={photo.id}
+                        className="relative group cursor-pointer rounded-lg overflow-hidden border border-gray-200 hover:border-green-400 transition-colors"
+                        onClick={() => addPexelsImage(photo.url)}
+                      >
+                        <img src={photo.url} alt={photo.alt} className="w-full h-20 object-cover" />
+                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center">
+                          <div className="text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity text-center">
+                            Click to add
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {pexelsResults.length === 0 && isSearchingPexels && (
+                  <div className="text-center py-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600 mx-auto"></div>
+                    <p className="text-sm text-gray-500 mt-2">Searching...</p>
                   </div>
                 )}
               </div>
@@ -710,7 +822,20 @@ const Home = () => {
                     }`}
                     onClick={() => setSelectedImage(image.id)}
                   >
-                    <img src={image.src} alt="Thumbnail" className="w-10 h-10 object-cover rounded" />
+                    <div className="w-10 h-10 rounded overflow-hidden bg-gray-200 flex-shrink-0">
+                      <img
+                        src={image.src}
+                        alt="Thumbnail"
+                        className="w-full h-full object-cover"
+                        onError={e => {
+                          // Fallback to a placeholder if image fails to load
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = "none";
+                          target.parentElement!.innerHTML =
+                            '<div class="w-full h-full bg-gray-300 flex items-center justify-center"><span class="text-xs text-gray-500">IMG</span></div>';
+                        }}
+                      />
+                    </div>
                     <span className="text-sm text-gray-600 flex-1 ml-2 truncate">
                       Layer {images.length - index} • {image.id.slice(0, 6)}
                     </span>
@@ -979,8 +1104,8 @@ const Home = () => {
                 1
               </div>
               <div>
-                <h3 className="font-medium text-gray-800">Upload Images</h3>
-                <p>Drag and drop or click to select multiple images</p>
+                <h3 className="font-medium text-gray-800">Add Images</h3>
+                <p>Upload your own or search Pexels for high-quality stock photos</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
