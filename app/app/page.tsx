@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import generate, { analyzeCollage } from "../action/generate";
 import { ImageItem, ContextMenu } from "../../types";
 import UploadArea from "../../components/UploadArea";
@@ -14,6 +14,7 @@ import EnhancedResult from "../../components/EnhancedResult";
 import LoadingStates from "../../components/LoadingStates";
 import ErrorDisplay from "../../components/ErrorDisplay";
 import Instructions from "../../components/Instructions";
+import { debounce } from "../../lib/utils";
 
 const Home = () => {
   const [images, setImages] = useState<ImageItem[]>([]);
@@ -41,6 +42,36 @@ const Home = () => {
   const [isSearchingPexels, setIsSearchingPexels] = useState(false);
   const [pexelsResults, setPexelsResults] = useState<any[]>([]);
   const canvasSize = { width: 800, height: 600 };
+
+  // Debounced search function
+  const debouncedSearch = useCallback(
+    debounce(async (query: string) => {
+      if (!query.trim()) {
+        setPexelsResults([]);
+        return;
+      }
+
+      setIsSearchingPexels(true);
+      setError(null);
+
+      try {
+        const response = await fetch(`/api/pexels?query=${encodeURIComponent(query.trim())}`);
+        const data = await response.json();
+
+        if (response.ok) {
+          setPexelsResults(data.photos || []);
+        } else {
+          throw new Error(data.error || "Failed to search Pexels");
+        }
+      } catch (err) {
+        console.error("Pexels search error:", err);
+        setError(err instanceof Error ? err.message : "Failed to search Pexels");
+      } finally {
+        setIsSearchingPexels(false);
+      }
+    }, 500), // 500ms delay
+    []
+  );
 
   // Close context menu when clicking elsewhere
   useEffect(() => {
@@ -272,26 +303,13 @@ const Home = () => {
 
   const searchPexels = async () => {
     if (!pexelsSearch.trim()) return;
-
-    setIsSearchingPexels(true);
-    setError(null);
-
-    try {
-      const response = await fetch(`/api/pexels?query=${encodeURIComponent(pexelsSearch.trim())}`);
-      const data = await response.json();
-
-      if (response.ok) {
-        setPexelsResults(data.photos || []);
-      } else {
-        throw new Error(data.error || "Failed to search Pexels");
-      }
-    } catch (err) {
-      console.error("Pexels search error:", err);
-      setError(err instanceof Error ? err.message : "Failed to search Pexels");
-    } finally {
-      setIsSearchingPexels(false);
-    }
+    debouncedSearch(pexelsSearch);
   };
+
+  // Effect to trigger search when pexelsSearch changes
+  useEffect(() => {
+    debouncedSearch(pexelsSearch);
+  }, [pexelsSearch, debouncedSearch]);
 
   const addPexelsImage = (imageUrl: string) => {
     const img = new Image();
@@ -349,7 +367,6 @@ const Home = () => {
             <PexelsSearch
               pexelsSearch={pexelsSearch}
               setPexelsSearch={setPexelsSearch}
-              searchPexels={searchPexels}
               isSearchingPexels={isSearchingPexels}
               pexelsResults={pexelsResults}
               addPexelsImage={addPexelsImage}

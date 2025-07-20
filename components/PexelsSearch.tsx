@@ -6,7 +6,6 @@ import { Search } from "lucide-react";
 interface PexelsSearchProps {
   pexelsSearch: string;
   setPexelsSearch: (value: string) => void;
-  searchPexels: () => void;
   isSearchingPexels: boolean;
   pexelsResults: any[];
   addPexelsImage: (imageUrl: string) => void;
@@ -15,7 +14,6 @@ interface PexelsSearchProps {
 const PexelsSearch: React.FC<PexelsSearchProps> = ({
   pexelsSearch,
   setPexelsSearch,
-  searchPexels,
   isSearchingPexels,
   pexelsResults,
   addPexelsImage,
@@ -24,23 +22,16 @@ const PexelsSearch: React.FC<PexelsSearchProps> = ({
     <div className="bg-white rounded-xl shadow-lg p-6">
       <h2 className="text-xl font-semibold text-gray-800 mb-4">Search Pexels</h2>
       <div className="space-y-4">
-        <div className="flex gap-2">
+        <div className="relative">
           <input
             type="text"
             placeholder="tree, gorilla, T-Rex etc."
             value={pexelsSearch}
             onChange={e => setPexelsSearch(e.target.value)}
-            onKeyPress={e => e.key === "Enter" && searchPexels()}
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            className="w-full px-3 py-2 pl-10 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
             disabled={isSearchingPexels}
           />
-          <button
-            onClick={searchPexels}
-            disabled={!pexelsSearch.trim() || isSearchingPexels}
-            className="px-4 py-2 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 text-white rounded-lg transition-colors disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            <Search className="h-4 w-4" />
-          </button>
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
         </div>
 
         {pexelsResults.length > 0 && (
