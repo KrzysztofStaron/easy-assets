@@ -24,7 +24,7 @@ export async function analyzeCollage(imageDataUrl) {
           content: [
             {
               type: "text",
-              text: 'Suggest changes to this image; Format your response as a JSON array of exactly 3 strings, like: ["remove the background of the gorilla", "change background to forest", "make it look like a cartoon]',
+              text: 'Analyze this enhanced image and suggest 3 specific improvements. Focus on composition, lighting, colors, and overall polish. Format your response as a JSON array of exactly 3 strings, like: ["enhance the lighting to make it more dramatic", "adjust the color balance for warmer tones", "add more depth to the background"]',
             },
             {
               type: "image_url",
@@ -52,10 +52,21 @@ export async function analyzeCollage(imageDataUrl) {
     } catch (parseError) {
       // Fallback: extract suggestions from text if JSON parsing fails
       console.warn("JSON parsing failed, using fallback extraction");
+      const fallbackSuggestions = [
+        "Enhance the lighting for better depth and contrast",
+        "Adjust color balance for more vibrant and professional look",
+        "Improve composition by refining the overall layout",
+      ];
+      return fallbackSuggestions;
     }
   } catch (error) {
     console.error("Error analyzing collage:", error);
     // Return default suggestions if API fails
+    return [
+      "Enhance the lighting for better depth and contrast",
+      "Adjust color balance for more vibrant and professional look",
+      "Improve composition by refining the overall layout",
+    ];
   }
 }
 
