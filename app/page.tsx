@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useRouter } from "next/navigation";
 import {
   Sparkles,
   Upload,
@@ -44,27 +45,6 @@ const features = [
   },
 ];
 
-const testimonials = [
-  {
-    name: "Sarah Chen",
-    role: "Social Media Manager",
-    content: "Easy Assets transformed my workflow! I create stunning posts in minutes instead of hours.",
-    avatar: "/placeholder.svg?height=40&width=40",
-  },
-  {
-    name: "Mike Rodriguez",
-    role: "Small Business Owner",
-    content: "No design skills? No problem! Easy Assets makes me look like a pro designer.",
-    avatar: "/placeholder.svg?height=40&width=40",
-  },
-  {
-    name: "Emma Thompson",
-    role: "Content Creator",
-    content: "The AI suggestions are incredible. It's like having a creative partner that never runs out of ideas.",
-    avatar: "/placeholder.svg?height=40&width=40",
-  },
-];
-
 const useCases = [
   { icon: Share2, title: "Social Media Posts", description: "Eye-catching content for all platforms" },
   { icon: Palette, title: "Marketing Materials", description: "Professional designs for campaigns" },
@@ -74,6 +54,7 @@ const useCases = [
 
 export default function EasyAssetsLanding() {
   const [activeFeature, setActiveFeature] = useState(0);
+  const router = useRouter();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-purple-50">
@@ -99,10 +80,18 @@ export default function EasyAssetsLanding() {
               <Button variant="ghost" className="text-gray-600 hover:text-sky-600">
                 Features
               </Button>
-              <Button variant="ghost" className="text-gray-600 hover:text-sky-600">
-                Pricing
-              </Button>
-              <Button className="bg-gradient-to-r from-sky-500 to-purple-500 hover:from-sky-600 hover:to-purple-600 text-white">
+              <a
+                href="https://github.com/KrzysztofStaron/easy-assets"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 text-gray-600 hover:text-sky-600"
+              >
+                GitHub
+              </a>
+              <Button
+                className="bg-gradient-to-r from-sky-500 to-purple-500 hover:from-sky-600 hover:to-purple-600 text-white"
+                onClick={() => router.push("/app")}
+              >
                 Start Creating Now
               </Button>
             </div>
@@ -147,6 +136,7 @@ export default function EasyAssetsLanding() {
             <Button
               size="lg"
               className="bg-gradient-to-r from-sky-500 to-purple-500 hover:from-sky-600 hover:to-purple-600 text-white px-10 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+              onClick={() => router.push("/app")}
             >
               <Sparkles className="w-5 h-5 mr-2" />
               Start Creating Now – Free!
@@ -265,49 +255,6 @@ export default function EasyAssetsLanding() {
         </div>
       </section>
 
-      {/* Social Proof */}
-      <section className="py-20 bg-gradient-to-br from-sky-50 to-purple-50">
-        <div className="container mx-auto px-6">
-          <div className="max-w-4xl mx-auto text-center mb-16">
-            <h2 className="text-4xl font-bold mb-6 text-gray-900">
-              Join thousands of creators turning ideas into art with Easy Assets!
-            </h2>
-            <div className="flex items-center justify-center gap-2 text-sky-600 mb-8">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className="w-6 h-6 fill-current" />
-              ))}
-              <span className="ml-2 text-gray-700 font-medium">4.9/5 from 2,847 creators</span>
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {testimonials.map((testimonial, index) => (
-              <Card key={index} className="p-6 bg-white/80 backdrop-blur-sm border border-sky-100">
-                <CardContent className="p-0">
-                  <div className="flex items-center gap-4 mb-4">
-                    <img
-                      src={testimonial.avatar || "/placeholder.svg"}
-                      alt={testimonial.name}
-                      className="w-12 h-12 rounded-full"
-                    />
-                    <div>
-                      <h4 className="font-semibold text-gray-900">{testimonial.name}</h4>
-                      <p className="text-sm text-gray-600">{testimonial.role}</p>
-                    </div>
-                  </div>
-                  <p className="text-gray-700 italic">"{testimonial.content}"</p>
-                  <div className="flex items-center gap-1 mt-3">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="w-4 h-4 fill-current text-yellow-400" />
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-r from-sky-600 to-purple-600">
         <div className="container mx-auto px-6">
@@ -322,6 +269,7 @@ export default function EasyAssetsLanding() {
               <Button
                 size="lg"
                 className="bg-white text-sky-600 hover:bg-gray-50 px-10 py-4 text-lg font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                onClick={() => router.push("/app")}
               >
                 <Sparkles className="w-5 h-5 mr-2" />
                 Start Creating Now – Free!
