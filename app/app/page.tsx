@@ -359,12 +359,7 @@ const Home = () => {
               updateImageTransform={updateImageTransform}
               resetImageTransform={resetImageTransform}
             />
-            <AISuggestions
-              suggestions={suggestions}
-              enhancedResult={enhancedResult}
-              isApplyingSuggestion={isApplyingSuggestion}
-              applySuggestion={applySuggestion}
-            />
+
             <ImageList
               images={images}
               selectedImage={selectedImage}
@@ -374,6 +369,12 @@ const Home = () => {
               removeImage={removeImage}
             />
             <Actions images={images} clearCanvas={clearCanvas} downloadCanvas={downloadCanvas} />
+            <AISuggestions
+              suggestions={suggestions}
+              enhancedResult={enhancedResult}
+              isApplyingSuggestion={isApplyingSuggestion}
+              applySuggestion={applySuggestion}
+            />
           </div>
 
           {/* Canvas Area */}
