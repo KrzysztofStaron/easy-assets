@@ -147,26 +147,13 @@ export default function EasyAssetsLanding() {
 
           {/* Hero Visual */}
           <div className="relative max-w-4xl mx-auto">
-            <div className="bg-white rounded-2xl shadow-2xl p-8 relative z-10">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div className="aspect-square bg-gradient-to-br from-sky-100 to-sky-200 rounded-lg flex items-center justify-center">
-                  <Image className="w-8 h-8 text-sky-600" />
-                </div>
-                <div className="aspect-square bg-gradient-to-br from-purple-100 to-purple-200 rounded-lg flex items-center justify-center">
-                  <Camera className="w-8 h-8 text-purple-600" />
-                </div>
-                <div className="aspect-square bg-gradient-to-br from-sky-100 to-purple-100 rounded-lg flex items-center justify-center">
-                  <Layers className="w-8 h-8 text-sky-600" />
-                </div>
-                <div className="aspect-square bg-gradient-to-br from-purple-100 to-sky-100 rounded-lg flex items-center justify-center">
-                  <Magic className="w-8 h-8 text-purple-600" />
-                </div>
-              </div>
-              <div className="flex items-center justify-center gap-2 p-4 bg-gradient-to-r from-sky-50 to-purple-50 rounded-lg">
-                <Wand2 className="w-5 h-5 text-purple-500" />
-                <span className="text-gray-700 font-medium">AI Enhancement Complete!</span>
-                <CheckCircle className="w-5 h-5 text-green-500" />
-              </div>
+            <div className="bg-white rounded-2xl shadow-2xl p-4 relative z-10 overflow-hidden">
+              <img
+                src="/landing.jpg"
+                alt="AI-powered collage transformation showcase"
+                className="w-full h-auto rounded-xl"
+                style={{ maxHeight: "500px", objectFit: "cover" }}
+              />
             </div>
             <div className="absolute inset-0 bg-gradient-to-r from-sky-200/20 to-purple-200/20 rounded-2xl transform rotate-3"></div>
             <div className="absolute inset-0 bg-gradient-to-r from-purple-200/20 to-sky-200/20 rounded-2xl transform -rotate-3"></div>
