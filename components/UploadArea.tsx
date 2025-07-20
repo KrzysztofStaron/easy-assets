@@ -23,13 +23,13 @@ const UploadArea: React.FC<UploadAreaProps> = ({ onDrop }) => {
       <div
         {...getRootProps()}
         className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-          isDragActive ? "border-blue-400 bg-blue-50" : "border-gray-300 hover:border-gray-400"
+          isDragActive ? "border-orange-400 bg-orange-50" : "border-gray-300 hover:border-gray-400"
         }`}
       >
         <input {...getInputProps()} />
         <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
         {isDragActive ? (
-          <p className="text-blue-600">Drop the images here...</p>
+          <p className="text-orange-600">Drop the images here...</p>
         ) : (
           <div>
             <p className="text-gray-600 mb-2">Drag & drop images here, or click to select</p>

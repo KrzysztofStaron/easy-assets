@@ -37,7 +37,7 @@ const Instructions: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 text-sm text-gray-600">
         {steps.map(step => (
           <div key={step.number} className="flex items-start gap-3">
-            <div className="size-7 px-3 bg-blue-500 text-white rounded-md flex items-center justify-center text-xs font-bold shadow-sm">
+            <div className="size-7 px-3 bg-orange-500 text-white rounded-md flex items-center justify-center text-xs font-bold shadow-sm">
               {step.number}
             </div>
             <div>

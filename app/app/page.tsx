@@ -339,7 +339,7 @@ const Home = () => {
       }}
     >
       {/* Shader overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white/80 via-white/60 to-blue-50/70"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-white/80 via-white/60 to-orange-50/70"></div>
 
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 mt-15">

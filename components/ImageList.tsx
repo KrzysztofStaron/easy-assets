@@ -40,7 +40,7 @@ const ImageList: React.FC<ImageListProps> = ({
           <div
             key={image.id}
             className={`flex items-center justify-between p-2 rounded-lg transition-colors ${
-              selectedImage === image.id ? "bg-blue-50 border border-blue-200" : "bg-gray-50"
+              selectedImage === image.id ? "bg-orange-50 border border-orange-200" : "bg-gray-50"
             }`}
             onClick={() => setSelectedImage(image.id)}
           >

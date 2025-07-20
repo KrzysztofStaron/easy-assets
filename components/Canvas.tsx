@@ -377,14 +377,14 @@ const Canvas: React.FC<CanvasProps> = ({
                 placeholder="Custom enhancement prompt (optional)"
                 value={enhancementPrompt}
                 onChange={e => setEnhancementPrompt(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                 disabled={isEnhancing}
               />
             </div>
             <button
               onClick={enhanceCollage}
               disabled={images.length === 0 || isEnhancing}
-              className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:bg-gray-300 text-white py-3 px-6 rounded-lg transition-colors disabled:cursor-not-allowed shadow-lg"
+              className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:bg-gray-300 text-white py-3 px-6 rounded-lg transition-colors disabled:cursor-not-allowed shadow-lg"
             >
               <Sparkles className="h-5 w-5" />
               {isEnhancing ? "Generating..." : "Generate"}

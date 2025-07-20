@@ -39,7 +39,7 @@ const AISuggestions: React.FC<AISuggestionsProps> = ({
               key={index}
               onClick={() => applySuggestion(suggestion)}
               disabled={!enhancedResult || isApplyingSuggestion}
-              className="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-orange-50 hover:border-orange-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <div className="text-sm font-medium text-gray-800 mb-1">Suggestion {index + 1}</div>
               <div className="text-xs text-gray-600">{suggestion}</div>

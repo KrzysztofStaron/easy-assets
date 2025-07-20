@@ -37,7 +37,7 @@ const Actions: React.FC<ActionsProps> = ({ images, clearCanvas, downloadCanvas }
         <button
           onClick={downloadCanvas}
           disabled={images.length === 0}
-          className="w-full flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white py-2 px-4 rounded-lg transition-colors disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 text-white py-2 px-4 rounded-lg transition-colors disabled:cursor-not-allowed"
         >
           <Download className="h-4 w-4" />
           Download Original
