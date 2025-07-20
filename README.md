@@ -1,36 +1,173 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI-Powered Collage Creator
 
-## Getting Started
+A sophisticated web application that combines traditional image editing capabilities with cutting-edge AI technology to create professional-quality digital assets and marketing materials.
 
-First, run the development server:
+## 🎨 What It Does
+
+The AI-Powered Collage Creator is a comprehensive tool that allows users to:
+
+### 📸 **Upload & Source Images**
+
+- **Drag & Drop Upload**: Seamlessly upload your own images (JPG, PNG, GIF, WebP)
+- **Pexels Integration**: Search and add high-quality stock photos directly from Pexels
+- **Multiple Formats**: Support for various image formats and sizes
+
+### 🎯 **Advanced Image Manipulation**
+
+- **Transform Controls**: Scale, rotate, and position images with precision
+- **Layer Management**: Organize images in layers with forward/backward controls
+- **Interactive Canvas**: Click to select, drag to move, use handles for scaling and rotation
+- **Context Menus**: Right-click for additional options like "Bring to Front" or "Send to Back"
+
+### 🤖 **AI-Powered Enhancement**
+
+- **Smart Enhancement**: Transform basic collages into professional marketing materials
+- **Custom Prompts**: Add your own enhancement instructions for personalized results
+- **Auto-Suggestions**: AI analyzes your enhanced image and provides improvement suggestions
+- **Iterative Editing**: Make multiple edits to perfect your result
+
+### 💾 **Export & Download**
+
+- **Original Export**: Download your collage as-is
+- **Enhanced Export**: Download the AI-enhanced professional version
+- **High Quality**: Maintain image quality throughout the process
+
+## 🚀 Key Features
+
+### **Intuitive Interface**
+
+- Clean, modern design with a beautiful gradient background
+- Responsive layout that works on desktop and tablet
+- Real-time preview of all changes
+
+### **Professional Results**
+
+- AI transforms amateur collages into studio-quality assets
+- Enhanced colors, lighting, and composition
+- Perfect for marketing materials, social media, and presentations
+
+### **Smart AI Integration**
+
+- Uses advanced AI models for image enhancement
+- Automatic analysis and suggestion generation
+- Maintains artistic intent while improving quality
+
+### **Flexible Workflow**
+
+- Start with any combination of images
+- Apply transformations and adjustments
+- Enhance with AI for professional results
+- Iterate and refine as needed
+
+## 🛠️ Technology Stack
+
+- **Frontend**: React 18, TypeScript, Next.js 14 (App Router)
+- **Styling**: Tailwind CSS with custom components
+- **UI Components**: shadcn/ui components
+- **File Handling**: react-dropzone for drag & drop
+- **External APIs**: Pexels API for stock photos
+- **AI Integration**: Custom AI enhancement pipeline
+- **Canvas**: HTML5 Canvas for image manipulation
+
+## 📱 How to Use
+
+### 1. **Add Images**
+
+- Drag and drop your own images into the upload area
+- Or search Pexels for high-quality stock photos
+- Images are automatically sized and positioned on the canvas
+
+### 2. **Transform & Layer**
+
+- Click to select any image
+- Drag to move, use corner handles to scale, top handle to rotate
+- Use the sidebar controls for precise adjustments
+- Right-click for layer management options
+
+### 3. **AI Enhance**
+
+- Add a custom enhancement prompt (optional)
+- Click "Generate" to transform your collage
+- AI will enhance colors, lighting, and overall composition
+
+### 4. **Edit & Refine**
+
+- Review AI-generated suggestions for improvements
+- Apply suggestions or make custom edits
+- Iterate as many times as needed
+
+### 5. **Download & Share**
+
+- Download the original collage
+- Download the enhanced professional version
+- Perfect for marketing, social media, or presentations
+
+## 🎯 Perfect For
+
+- **Marketing Teams**: Create professional marketing materials quickly
+- **Social Media Managers**: Generate engaging visual content
+- **Designers**: Rapid prototyping and concept development
+- **Content Creators**: Transform basic images into polished assets
+- **Small Businesses**: Professional visuals without design expertise
+
+## 🔧 Installation & Setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+# Clone the repository
+git clone [repository-url]
+
+# Install dependencies
+pnpm install
+
+# Set up environment variables
+cp .env.example .env.local
+
+# Run the development server
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🌟 Why Choose This Tool?
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### **Time-Saving**
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Transform basic collages into professional assets in seconds
+- No need for complex design software
+- AI handles the technical aspects of enhancement
 
-## Learn More
+### **Professional Quality**
 
-To learn more about Next.js, take a look at the following resources:
+- Studio-quality results without design expertise
+- Enhanced colors, lighting, and composition
+- Perfect for marketing and professional use
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### **User-Friendly**
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Intuitive drag-and-drop interface
+- Real-time preview of all changes
+- No steep learning curve
 
-## Deploy on Vercel
+### **Flexible & Powerful**
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Start with any images you have
+- Custom enhancement prompts for personalized results
+- Iterative editing for perfect results
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🎨 Use Cases
+
+- **Marketing Materials**: Create professional banners, posters, and ads
+- **Social Media Content**: Generate engaging posts and stories
+- **Presentations**: Add visual appeal to business presentations
+- **E-commerce**: Create product collages and promotional images
+- **Personal Projects**: Design cards, invitations, and personal artwork
+
+## 🔮 Future Enhancements
+
+- Additional AI models for different artistic styles
+- More stock photo sources
+- Advanced text and typography tools
+- Template library for common use cases
+- Collaboration features for team projects
+
+---
+
+**Transform your ideas into professional visuals with the power of AI!** 🚀

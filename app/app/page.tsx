@@ -342,15 +342,7 @@ const Home = () => {
       <div className="absolute inset-0 bg-gradient-to-br from-white/80 via-white/60 to-blue-50/70"></div>
 
       <div className="max-w-7xl mx-auto relative z-10">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">AI-Powered Collage Creator</h1>
-          <p className="text-gray-600">
-            Create, transform, and enhance collages with AI intelligence and professional results
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 mt-15">
           {/* Controls Panel */}
           <div className="lg:col-span-1 space-y-6">
             <UploadArea onDrop={onDrop} />
@@ -385,56 +377,58 @@ const Home = () => {
           </div>
 
           {/* Canvas Area */}
-          <Canvas
-            images={images}
-            selectedImage={selectedImage}
-            setSelectedImage={setSelectedImage}
-            isDragging={isDragging}
-            setIsDragging={setIsDragging}
-            draggedImage={draggedImage}
-            setDraggedImage={setDraggedImage}
-            dragOffset={dragOffset}
-            setDragOffset={setDragOffset}
-            transformMode={transformMode}
-            setTransformMode={setTransformMode}
-            initialTransform={initialTransform}
-            setInitialTransform={setInitialTransform}
-            setImages={setImages}
-            canvasSize={canvasSize}
-            contextMenu={contextMenu}
-            setContextMenu={setContextMenu}
-            removeImage={removeImage}
-            resetImageTransform={resetImageTransform}
-            moveToFront={moveToFront}
-            moveForward={moveForward}
-            moveBackward={moveBackward}
-            moveToBack={moveToBack}
-            enhancementPrompt={enhancementPrompt}
-            setEnhancementPrompt={setEnhancementPrompt}
-            enhanceCollage={enhanceCollage}
-            isEnhancing={isEnhancing}
-          />
+          <div className="lg:col-span-3 space-y-6">
+            <Canvas
+              images={images}
+              selectedImage={selectedImage}
+              setSelectedImage={setSelectedImage}
+              isDragging={isDragging}
+              setIsDragging={setIsDragging}
+              draggedImage={draggedImage}
+              setDraggedImage={setDraggedImage}
+              dragOffset={dragOffset}
+              setDragOffset={setDragOffset}
+              transformMode={transformMode}
+              setTransformMode={setTransformMode}
+              initialTransform={initialTransform}
+              setInitialTransform={setInitialTransform}
+              setImages={setImages}
+              canvasSize={canvasSize}
+              contextMenu={contextMenu}
+              setContextMenu={setContextMenu}
+              removeImage={removeImage}
+              resetImageTransform={resetImageTransform}
+              moveToFront={moveToFront}
+              moveForward={moveForward}
+              moveBackward={moveBackward}
+              moveToBack={moveToBack}
+              enhancementPrompt={enhancementPrompt}
+              setEnhancementPrompt={setEnhancementPrompt}
+              enhanceCollage={enhanceCollage}
+              isEnhancing={isEnhancing}
+            />
+
+            {/* Loading States */}
+            <LoadingStates
+              isEnhancing={isEnhancing}
+              isAnalyzing={isAnalyzing}
+              isApplyingSuggestion={isApplyingSuggestion}
+            />
+
+            {/* Error Display */}
+            <ErrorDisplay error={error} />
+
+            {/* Enhanced Result */}
+            <EnhancedResult
+              enhancedResult={enhancedResult}
+              downloadEnhanced={downloadEnhanced}
+              editPrompt={editPrompt}
+              setEditPrompt={setEditPrompt}
+              editGeneratedImage={editGeneratedImage}
+              isEnhancing={isEnhancing}
+            />
+          </div>
         </div>
-
-        {/* Loading States */}
-        <LoadingStates
-          isEnhancing={isEnhancing}
-          isAnalyzing={isAnalyzing}
-          isApplyingSuggestion={isApplyingSuggestion}
-        />
-
-        {/* Error Display */}
-        <ErrorDisplay error={error} />
-
-        {/* Enhanced Result */}
-        <EnhancedResult
-          enhancedResult={enhancedResult}
-          downloadEnhanced={downloadEnhanced}
-          editPrompt={editPrompt}
-          setEditPrompt={setEditPrompt}
-          editGeneratedImage={editGeneratedImage}
-          isEnhancing={isEnhancing}
-        />
 
         {/* Instructions */}
         <Instructions />

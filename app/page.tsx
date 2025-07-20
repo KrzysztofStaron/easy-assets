@@ -143,14 +143,6 @@ export default function EasyAssetsLanding() {
               Start Creating Now – Free!
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              className="px-8 py-4 text-lg border-2 border-sky-200 hover:bg-sky-50 text-sky-600 bg-white/80 backdrop-blur-sm"
-            >
-              <Play className="w-5 h-5 mr-2" />
-              Explore AI Enhancements
-            </Button>
           </div>
 
           {/* Hero Visual */}
@@ -275,14 +267,6 @@ export default function EasyAssetsLanding() {
                 <Sparkles className="w-5 h-5 mr-2" />
                 Start Creating Now – Free!
                 <ChevronRight className="w-5 h-5 ml-2" />
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="px-8 py-4 text-lg border-2 border-white/30 hover:bg-white/10 text-white bg-transparent backdrop-blur-sm"
-              >
-                <Download className="w-5 h-5 mr-2" />
-                Explore AI Enhancements
               </Button>
             </div>
 
