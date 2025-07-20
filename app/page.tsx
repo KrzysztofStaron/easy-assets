@@ -22,6 +22,7 @@ import {
   Camera,
   Layers,
   MagnetIcon as Magic,
+  Github,
 } from "lucide-react";
 
 const features = [
@@ -86,7 +87,7 @@ export default function EasyAssetsLanding() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 text-gray-600 hover:text-sky-600"
               >
-                GitHub
+                <Github className="w-5 h-5" />
               </a>
               <Button
                 className="bg-gradient-to-r from-sky-500 to-purple-500 hover:from-sky-600 hover:to-purple-600 text-white"
