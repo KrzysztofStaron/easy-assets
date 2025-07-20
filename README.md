@@ -2,6 +2,10 @@
 
 A sophisticated web application that combines traditional image editing capabilities with cutting-edge AI technology to create professional-quality digital assets and marketing materials.
 
+![AI-Powered Collage Creator Interface](public/app.png)
+
+_The intuitive interface allows you to upload images, transform them, and enhance with AI_
+
 ## 🎨 What It Does
 
 The AI-Powered Collage Creator is a comprehensive tool that allows users to:
@@ -25,6 +29,10 @@ The AI-Powered Collage Creator is a comprehensive tool that allows users to:
 - **Custom Prompts**: Add your own enhancement instructions for personalized results
 - **Auto-Suggestions**: AI analyzes your enhanced image and provides improvement suggestions
 - **Iterative Editing**: Make multiple edits to perfect your result
+
+![AI Transformation Example](public/transform.jpg)
+
+_See the power of AI transformation: from basic collage to professional marketing material_
 
 ### 💾 **Export & Download**
 
