@@ -496,6 +496,7 @@ const Home = () => {
               setEditPrompt={setEditPrompt}
               editGeneratedImage={editGeneratedImage}
               isEnhancing={isEnhancing}
+              enhancementPrompt={enhancementPrompt}
             />
           </div>
         </div>
