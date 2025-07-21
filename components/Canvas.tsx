@@ -90,6 +90,7 @@ const Canvas: React.FC<CanvasProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const initialDistanceRef = useRef<number>(0);
+  const initialAngleRef = useRef<number>(0);
 
   const getTransformHandles = (image: ImageItem): TransformHandle[] => {
     const centerX = image.x + (image.width * image.scale) / 2;
@@ -244,6 +245,14 @@ const Canvas: React.FC<CanvasProps> = ({
             initialDistanceRef.current = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
           }
 
+          // For rotation, calculate initial angle from center to mouse position
+          if (handle.type === "rotate") {
+            const centerX = image.x + (image.width * image.scale) / 2;
+            const centerY = image.y + (image.height * image.scale) / 2;
+            const initialAngle = Math.atan2(y - centerY, x - centerX);
+            initialAngleRef.current = initialAngle;
+          }
+
           setDragOffset({ x, y });
         }
         return;
@@ -313,12 +322,18 @@ const Canvas: React.FC<CanvasProps> = ({
           case "rotate":
             const imageCenterX = img.x + (img.width * img.scale) / 2;
             const imageCenterY = img.y + (img.height * img.scale) / 2;
-            const angle = Math.atan2(clampedY - imageCenterY, clampedX - imageCenterX);
-            const degrees = (angle * 180) / Math.PI + 90; // +90 to make top = 0 degrees
+            const currentAngle = Math.atan2(clampedY - imageCenterY, clampedX - imageCenterX);
+
+            // Calculate the relative angle change from the initial angle
+            const angleDifference = currentAngle - initialAngleRef.current;
+            const degreesDifference = (angleDifference * 180) / Math.PI;
+
+            // Apply the relative rotation to the initial rotation
+            const newRotation = initialTransform.rotation + degreesDifference;
 
             return {
               ...img,
-              rotation: degrees,
+              rotation: newRotation,
             };
 
           default:
@@ -334,6 +349,7 @@ const Canvas: React.FC<CanvasProps> = ({
     setTransformMode("move");
     setDragOffset({ x: 0, y: 0 });
     initialDistanceRef.current = 0;
+    initialAngleRef.current = 0;
   };
 
   const handleContextMenu = (e: React.MouseEvent<HTMLCanvasElement>) => {
