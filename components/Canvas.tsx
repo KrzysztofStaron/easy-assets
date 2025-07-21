@@ -89,7 +89,6 @@ const Canvas: React.FC<CanvasProps> = ({
   isEnhancing,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const initialDistanceRef = useRef<number>(0);
 
   const getTransformHandles = (image: ImageItem): TransformHandle[] => {
     const centerX = image.x + (image.width * image.scale) / 2;
@@ -236,14 +235,6 @@ const Canvas: React.FC<CanvasProps> = ({
         const image = images.find(img => img.id === selectedImage);
         if (image) {
           setInitialTransform({ scale: image.scale, rotation: image.rotation });
-
-          // For scaling, calculate initial distance from center to mouse position
-          if (handle.type === "scale") {
-            const centerX = image.x + (image.width * image.scale) / 2;
-            const centerY = image.y + (image.height * image.scale) / 2;
-            initialDistanceRef.current = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
-          }
-
           setDragOffset({ x, y });
         }
         return;
@@ -277,10 +268,6 @@ const Canvas: React.FC<CanvasProps> = ({
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    // Clamp coordinates to canvas bounds to prevent scaling issues
-    const clampedX = Math.max(0, Math.min(x, canvas.width));
-    const clampedY = Math.max(0, Math.min(y, canvas.height));
-
     const image = images.find(img => img.id === draggedImage);
     if (!image) return;
 
@@ -299,10 +286,11 @@ const Canvas: React.FC<CanvasProps> = ({
           case "scale":
             const centerX = img.x + (img.width * img.scale) / 2;
             const centerY = img.y + (img.height * img.scale) / 2;
-            const currentDistance = Math.sqrt(Math.pow(clampedX - centerX, 2) + Math.pow(clampedY - centerY, 2));
-
-            // Use the initial distance reference for stable scaling
-            const scaleMultiplier = currentDistance / initialDistanceRef.current;
+            const initialDistance = Math.sqrt(
+              Math.pow(dragOffset.x - centerX, 2) + Math.pow(dragOffset.y - centerY, 2)
+            );
+            const currentDistance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
+            const scaleMultiplier = currentDistance / initialDistance;
             const newScale = Math.max(0.1, Math.min(3, initialTransform.scale * scaleMultiplier));
 
             return {
@@ -313,7 +301,7 @@ const Canvas: React.FC<CanvasProps> = ({
           case "rotate":
             const imageCenterX = img.x + (img.width * img.scale) / 2;
             const imageCenterY = img.y + (img.height * img.scale) / 2;
-            const angle = Math.atan2(clampedY - imageCenterY, clampedX - imageCenterX);
+            const angle = Math.atan2(y - imageCenterY, x - imageCenterX);
             const degrees = (angle * 180) / Math.PI + 90; // +90 to make top = 0 degrees
 
             return {
@@ -333,7 +321,6 @@ const Canvas: React.FC<CanvasProps> = ({
     setDraggedImage(null);
     setTransformMode("move");
     setDragOffset({ x: 0, y: 0 });
-    initialDistanceRef.current = 0;
   };
 
   const handleContextMenu = (e: React.MouseEvent<HTMLCanvasElement>) => {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React from "react";
 import { RotateCcw } from "lucide-react";
 
 interface ImageItem {
@@ -26,49 +26,6 @@ const TransformControls: React.FC<TransformControlsProps> = ({
   updateImageTransform,
   resetImageTransform,
 }) => {
-  const [localScale, setLocalScale] = useState(1);
-  const [localRotation, setLocalRotation] = useState(0);
-
-  // Update local state when selected image changes
-  useEffect(() => {
-    if (selectedImageData) {
-      setLocalScale(selectedImageData.scale);
-      setLocalRotation(selectedImageData.rotation);
-    }
-  }, [selectedImageData]);
-
-  // Debounced update function
-  const debouncedUpdate = useCallback(
-    (() => {
-      let timeoutId: NodeJS.Timeout;
-      return (id: string, updates: Partial<Pick<ImageItem, "scale" | "rotation">>) => {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => {
-          updateImageTransform(id, updates);
-        }, 50); // 50ms debounce
-      };
-    })(),
-    [updateImageTransform]
-  );
-
-  const handleScaleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newScale = parseFloat(e.target.value);
-    setLocalScale(newScale);
-
-    if (selectedImageData) {
-      debouncedUpdate(selectedImageData.id, { scale: newScale });
-    }
-  };
-
-  const handleRotationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newRotation = parseFloat(e.target.value);
-    setLocalRotation(newRotation);
-
-    if (selectedImageData) {
-      debouncedUpdate(selectedImageData.id, { rotation: newRotation });
-    }
-  };
-
   if (!selectedImageData) return null;
 
   return (
@@ -76,15 +33,17 @@ const TransformControls: React.FC<TransformControlsProps> = ({
       <h2 className="text-xl font-semibold text-gray-800 mb-4">Transform Controls</h2>
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Scale: {localScale.toFixed(2)}x</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Scale: {selectedImageData.scale.toFixed(2)}x
+          </label>
           <input
             type="range"
             min="0.1"
             max="3"
-            step="0.05"
-            value={localScale}
-            onChange={handleScaleChange}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+            step="0.1"
+            value={selectedImageData.scale}
+            onChange={e => updateImageTransform(selectedImageData.id, { scale: parseFloat(e.target.value) })}
+            className="w-full"
           />
           <div className="flex justify-between text-xs text-gray-500 mt-1">
             <span>0.1x</span>
@@ -93,15 +52,16 @@ const TransformControls: React.FC<TransformControlsProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Rotation: {Math.round(localRotation)}°</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Rotation: {Math.round(selectedImageData.rotation)}°
+          </label>
           <input
             type="range"
             min="0"
             max="360"
-            step="1"
-            value={localRotation}
-            onChange={handleRotationChange}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+            value={selectedImageData.rotation}
+            onChange={e => updateImageTransform(selectedImageData.id, { rotation: parseFloat(e.target.value) })}
+            className="w-full"
           />
           <div className="flex justify-between text-xs text-gray-500 mt-1">
             <span>0°</span>
