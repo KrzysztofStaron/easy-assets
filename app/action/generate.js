@@ -70,6 +70,73 @@ export async function analyzeCollage(imageDataUrl) {
   }
 }
 
+export async function predictUserIntent(canvasImageUrl, individualImages = [], prompt = "") {
+  try {
+    // Build content array with canvas image and individual images
+    const messageContent = [
+      {
+        type: "text",
+        text: `Analyze this user-created collage and predict specific transformations they want to perform. 
+
+You can see:
+1. The final collage image (how the user arranged everything)
+2. Individual source images that were used to create the collage
+
+Focus on actionable changes like:
+- How should objects interact with each other? (e.g., "put the phone in her hand", "make the cat sit on the chair", "put the coca cole in her hand")
+- Where should elements be positioned? (e.g., "move the car to the road", "place the flower in the vase")
+- How should objects fit into the scene? (e.g., "make the person stand on the ground", "put the book on the table")
+- What effects should be applied? (e.g., "add shadows under objects", "make the background blurry")
+
+Also keep the reponse short and concise, simple and to the point.
+Put everything into 1 clear reponse, your reponse will be directly parsed, so make sure to not mention that it's an reponse.
+
+The user prompt is: ${prompt}
+`,
+      },
+      {
+        type: "image_url",
+        image_url: {
+          url: canvasImageUrl,
+        },
+      },
+    ];
+
+    // Add individual images as context
+    individualImages.forEach((imageUrl, index) => {
+      messageContent.push({
+        type: "image_url",
+        image_url: {
+          url: imageUrl,
+        },
+      });
+    });
+
+    const response = await openai.chat.completions.create({
+      model: "openai/gpt-4.1-mini",
+      messages: [
+        {
+          role: "user",
+          content: messageContent,
+        },
+      ],
+      max_tokens: 800,
+      temperature: 0.5,
+    });
+
+    const content = response.choices[0].message.content;
+
+    if (content) {
+      return content;
+    } else {
+      throw new Error("No content received from prediction");
+    }
+  } catch (error) {
+    console.error("Error predicting user intent:", error);
+    throw new Error("Failed to predict user intent");
+  }
+}
+
 export default async function generate(imagePath, prompt) {
   try {
     let input_image;

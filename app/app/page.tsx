@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import generate, { analyzeCollage } from "../action/generate";
+import generate, { analyzeCollage, predictUserIntent } from "../action/generate";
 import { ImageItem, ContextMenu } from "../../types";
 import UploadArea from "../../components/UploadArea";
 import PexelsSearch from "../../components/PexelsSearch";
@@ -15,6 +15,7 @@ import LoadingStates from "../../components/LoadingStates";
 import ErrorDisplay from "../../components/ErrorDisplay";
 import Instructions from "../../components/Instructions";
 import { debounce } from "../../lib/utils";
+import UserIntentDisplay from "@/components/UserIntentDisplay";
 
 const Home = () => {
   const [images, setImages] = useState<ImageItem[]>([]);
@@ -41,6 +42,8 @@ const Home = () => {
   const [pexelsSearch, setPexelsSearch] = useState("");
   const [isSearchingPexels, setIsSearchingPexels] = useState(false);
   const [pexelsResults, setPexelsResults] = useState<any[]>([]);
+  const [userIntent, setUserIntent] = useState<any>(null);
+  const [showUserIntent, setShowUserIntent] = useState(false);
   const canvasSize = { width: 800, height: 600 };
 
   // Debounced search function
@@ -195,6 +198,8 @@ const Home = () => {
     setEnhancedResult(null);
     setError(null);
     setSuggestions([]);
+    setUserIntent(null);
+    setShowUserIntent(false);
   };
 
   const downloadCanvas = () => {
@@ -244,24 +249,64 @@ const Home = () => {
       // Get the canvas as a data URL
       const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
 
-      // Use user's custom prompt or default prompt
-      const prompt =
-        enhancementPrompt.trim() ||
-        "Transform this collage into a professional, high-quality digital asset with enhanced colors, perfect lighting, crisp details, and polished composition. Make it look like a premium marketing material with vibrant colors and studio-quality finish. Many components will be porly pasted by user, so use the collage as a base, if things have a background there is more chance that it is pasted by user, so make sure to use the collage as a base and enhance it.";
-
-      const result = await generate(dataUrl, prompt);
-      setEnhancedResult(result);
-
-      // Automatically analyze the enhanced output image for suggestions
-      setIsAnalyzing(true);
+      // Predict user intent and log to console
       try {
-        const aiSuggestions = await analyzeCollage(result);
-        setSuggestions(aiSuggestions || []);
-      } catch (analysisErr) {
-        console.error("Auto-analysis error:", analysisErr);
-        // Don't set error state for analysis failure, as enhancement succeeded
-      } finally {
-        setIsAnalyzing(false);
+        // Get all individual image URLs
+        const individualImageUrls = images.map(img => img.src);
+        console.log("📸 Individual images:", individualImageUrls.length);
+
+        const predictedIntent = (await predictUserIntent(dataUrl, individualImageUrls, enhancementPrompt.trim())) || "";
+        console.log("prediction:", predictedIntent);
+
+        // Store the user intent and show it
+        setUserIntent({ supportPrompt: predictedIntent });
+        setShowUserIntent(true);
+
+        // Build the final prompt using user's custom prompt + AI support data
+        const basePrompt =
+          enhancementPrompt.trim() ||
+          "Transform this collage into a professional, high-quality digital asset with enhanced colors, perfect lighting, crisp details, and polished composition. Make it look like a premium marketing material with vibrant colors and studio-quality finish. Many components will be porly pasted by user, so use the collage as a base, if things have a background there is more chance that it is pasted by user, so make sure to use the collage as a base and enhance it.";
+
+        // Combine base prompt with AI support data
+        const finalPrompt = `${basePrompt} ${predictedIntent}`;
+
+        console.log("finalPrompt:", finalPrompt);
+
+        const result = await generate(dataUrl, finalPrompt);
+        setEnhancedResult(result);
+
+        // Automatically analyze the enhanced output image for suggestions
+        setIsAnalyzing(true);
+        try {
+          const aiSuggestions = await analyzeCollage(result);
+          setSuggestions(aiSuggestions || []);
+        } catch (analysisErr) {
+          console.error("Auto-analysis error:", analysisErr);
+          // Don't set error state for analysis failure, as enhancement succeeded
+        } finally {
+          setIsAnalyzing(false);
+        }
+      } catch (predictionErr) {
+        console.error("User intent prediction failed:", predictionErr);
+        // Fallback to original behavior if prediction fails
+        const prompt =
+          enhancementPrompt.trim() ||
+          "Transform this collage into a professional, high-quality digital asset with enhanced colors, perfect lighting, crisp details, and polished composition. Make it look like a premium marketing material with vibrant colors and studio-quality finish. Many components will be porly pasted by user, so use the collage as a base, if things have a background there is more chance that it is pasted by user, so make sure to use the collage as a base and enhance it.";
+
+        const result = await generate(dataUrl, prompt);
+        setEnhancedResult(result);
+
+        // Automatically analyze the enhanced output image for suggestions
+        setIsAnalyzing(true);
+        try {
+          const aiSuggestions = await analyzeCollage(result);
+          setSuggestions(aiSuggestions || []);
+        } catch (analysisErr) {
+          console.error("Auto-analysis error:", analysisErr);
+          // Don't set error state for analysis failure, as enhancement succeeded
+        } finally {
+          setIsAnalyzing(false);
+        }
       }
     } catch (err) {
       console.error("Enhancement error:", err);
@@ -391,6 +436,13 @@ const Home = () => {
               enhancedResult={enhancedResult}
               isApplyingSuggestion={isApplyingSuggestion}
               applySuggestion={applySuggestion}
+            />
+
+            {/* User Intent Display */}
+            <UserIntentDisplay
+              userIntent={userIntent}
+              isVisible={showUserIntent}
+              onToggle={() => setShowUserIntent(!showUserIntent)}
             />
           </div>
 
