@@ -16,6 +16,7 @@ import ErrorDisplay from "../../components/ErrorDisplay";
 import Instructions from "../../components/Instructions";
 import { debounce } from "../../lib/utils";
 import UserIntentDisplay from "@/components/UserIntentDisplay";
+import ComparisonDisplay from "@/components/ComparisonDisplay";
 
 const Home = () => {
   const [images, setImages] = useState<ImageItem[]>([]);
@@ -44,6 +45,8 @@ const Home = () => {
   const [pexelsResults, setPexelsResults] = useState<any[]>([]);
   const [userIntent, setUserIntent] = useState<any>(null);
   const [showUserIntent, setShowUserIntent] = useState(false);
+  const [comparisonResult, setComparisonResult] = useState<any>(null);
+  const [showComparison, setShowComparison] = useState(false);
   const canvasSize = { width: 800, height: 600 };
 
   // Debounced search function
@@ -73,7 +76,7 @@ const Home = () => {
         setIsSearchingPexels(false);
       }
     }, 500), // 500ms delay
-    []
+    [setPexelsResults, setIsSearchingPexels, setError]
   );
 
   // Close context menu when clicking elsewhere
@@ -227,7 +230,9 @@ const Home = () => {
       const enhancedPrompt = `Apply this specific improvement to the image: "${suggestion}". Make precise adjustments while maintaining the overall quality and composition of the professional asset.`;
 
       const result = await generate(enhancedResult, enhancedPrompt);
-      setEnhancedResult(result);
+      setEnhancedResult(result.winner);
+      setComparisonResult(result.comparison);
+      setShowComparison(true);
       setEditPrompt(""); // Clear edit prompt when suggestion is applied
     } catch (err) {
       console.error("Suggestion application error:", err);
@@ -273,7 +278,9 @@ const Home = () => {
         console.log("finalPrompt:", finalPrompt);
 
         const result = await generate(dataUrl, finalPrompt);
-        setEnhancedResult(result);
+        setEnhancedResult(result.winner);
+        setComparisonResult(result.comparison);
+        setShowComparison(true);
 
         // Automatically analyze the enhanced output image for suggestions
         setIsAnalyzing(true);
@@ -294,7 +301,9 @@ const Home = () => {
           "Transform this collage into a professional, high-quality digital asset with enhanced colors, perfect lighting, crisp details, and polished composition. Make it look like a premium marketing material with vibrant colors and studio-quality finish. Many components will be porly pasted by user, so use the collage as a base, if things have a background there is more chance that it is pasted by user, so make sure to use the collage as a base and enhance it.";
 
         const result = await generate(dataUrl, prompt);
-        setEnhancedResult(result);
+        setEnhancedResult(result.winner);
+        setComparisonResult(result.comparison);
+        setShowComparison(true);
 
         // Automatically analyze the enhanced output image for suggestions
         setIsAnalyzing(true);
@@ -336,7 +345,9 @@ const Home = () => {
 
     try {
       const result = await generate(enhancedResult, editPrompt.trim());
-      setEnhancedResult(result);
+      setEnhancedResult(result.winner);
+      setComparisonResult(result.comparison);
+      setShowComparison(true);
       setEditPrompt(""); // Clear the edit prompt after successful edit
     } catch (err) {
       console.error("Edit error:", err);
@@ -354,7 +365,7 @@ const Home = () => {
   // Effect to trigger search when pexelsSearch changes
   useEffect(() => {
     debouncedSearch(pexelsSearch);
-  }, [pexelsSearch, debouncedSearch]);
+  }, [pexelsSearch]);
 
   const addPexelsImage = (imageUrl: string) => {
     const img = new Image();
@@ -444,6 +455,11 @@ const Home = () => {
               isVisible={showUserIntent}
               onToggle={() => setShowUserIntent(!showUserIntent)}
             />
+
+            {/* Comparison Display */}
+            {showComparison && comparisonResult && (
+              <ComparisonDisplay comparison={comparisonResult} onClose={() => setShowComparison(false)} />
+            )}
           </div>
 
           {/* Canvas Area */}
@@ -497,6 +513,8 @@ const Home = () => {
               editGeneratedImage={editGeneratedImage}
               isEnhancing={isEnhancing}
               enhancementPrompt={enhancementPrompt}
+              showComparison={showComparison}
+              onShowComparison={() => setShowComparison(true)}
             />
           </div>
         </div>

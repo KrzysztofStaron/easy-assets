@@ -11,6 +11,8 @@ interface EnhancedResultProps {
   editGeneratedImage: () => void;
   isEnhancing: boolean;
   enhancementPrompt: string;
+  showComparison?: boolean;
+  onShowComparison?: () => void;
 }
 
 const EnhancedResult: React.FC<EnhancedResultProps> = ({
@@ -21,6 +23,8 @@ const EnhancedResult: React.FC<EnhancedResultProps> = ({
   editGeneratedImage,
   isEnhancing,
   enhancementPrompt,
+  showComparison = false,
+  onShowComparison,
 }) => {
   if (!enhancedResult) return null;
 
@@ -44,13 +48,31 @@ const EnhancedResult: React.FC<EnhancedResultProps> = ({
             </div>
           )}
         </div>
-        <button
-          onClick={downloadEnhanced}
-          className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg transition-colors"
-        >
-          <Download className="h-4 w-4" />
-          Download Enhanced
-        </button>
+        <div className="flex items-center gap-2">
+          {showComparison && onShowComparison && (
+            <button
+              onClick={onShowComparison}
+              className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                />
+              </svg>
+              View Comparison
+            </button>
+          )}
+          <button
+            onClick={downloadEnhanced}
+            className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg transition-colors"
+          >
+            <Download className="h-4 w-4" />
+            Download Enhanced
+          </button>
+        </div>
       </div>
       <div className="border border-gray-200 rounded-lg overflow-hidden">
         <img src={enhancedResult} alt="AI Enhanced Collage" className="w-full h-auto" />

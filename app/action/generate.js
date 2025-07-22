@@ -70,6 +70,92 @@ export async function analyzeCollage(imageDataUrl) {
   }
 }
 
+export async function compareImages(image1Url, image2Url, prompt) {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "openai/gpt-4o-mini",
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: `Compare these two AI-generated images and determine which one is better. Consider:
+
+1. **Quality**: Which image has better overall quality, sharpness, and detail?
+2. **Composition**: Which has better composition, balance, and visual flow?
+3. **Lighting**: Which has more natural and appealing lighting?
+4. **Colors**: Which has more vibrant, balanced, and professional colors?
+5. **Coherence**: Which better matches the user's intent and prompt?
+6. **Professional Appeal**: Which looks more like a premium marketing asset?
+
+User's original prompt: "${prompt}"
+
+Respond with ONLY a JSON object in this exact format:
+{
+  "winner": "image1" or "image2",
+  "reason": "Brief explanation of why this image is better",
+  "score1": number between 1-10,
+  "score2": number between 1-10
+}`,
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: image1Url,
+              },
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: image2Url,
+              },
+            },
+          ],
+        },
+      ],
+      max_tokens: 300,
+      temperature: 0.3,
+    });
+
+    const content = response.choices[0].message.content;
+
+    try {
+      const comparison = JSON.parse(content);
+      return {
+        winner: comparison.winner,
+        reason: comparison.reason,
+        score1: comparison.score1,
+        score2: comparison.score2,
+        image1Url,
+        image2Url,
+      };
+    } catch (parseError) {
+      console.warn("JSON parsing failed for comparison, using fallback");
+      // Fallback: return image1 as winner if parsing fails
+      return {
+        winner: "image1",
+        reason: "Selected based on default criteria",
+        score1: 8,
+        score2: 7,
+        image1Url,
+        image2Url,
+      };
+    }
+  } catch (error) {
+    console.error("Error comparing images:", error);
+    // Fallback: return image1 as winner if comparison fails
+    return {
+      winner: "image1",
+      reason: "Selected due to comparison failure",
+      score1: 8,
+      score2: 7,
+      image1Url,
+      image2Url,
+    };
+  }
+}
+
 export async function predictUserIntent(canvasImageUrl, individualImages = [], prompt = "") {
   try {
     // Build content array with canvas image and individual images
@@ -169,29 +255,93 @@ export default async function generate(imagePath, prompt) {
       safety_tolerance: 2,
     };
 
-    // Create the prediction
-    const prediction = await replicate.predictions.create({
+    // Create two predictions with different models
+    const prediction1 = await replicate.predictions.create({
       model: "black-forest-labs/flux-kontext-max",
       input,
     });
 
-    // Poll for completion
-    let finalPrediction = prediction;
-    while (finalPrediction.status !== "succeeded" && finalPrediction.status !== "failed") {
+    const prediction2 = await replicate.predictions.create({
+      model: "black-forest-labs/flux-kontext-pro",
+      input,
+    });
+
+    // Poll for completion of both predictions
+    let finalPrediction1 = prediction1;
+    let finalPrediction2 = prediction2;
+
+    while (
+      (finalPrediction1.status !== "succeeded" && finalPrediction1.status !== "failed") ||
+      (finalPrediction2.status !== "succeeded" && finalPrediction2.status !== "failed")
+    ) {
       await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
-      finalPrediction = await replicate.predictions.get(prediction.id);
+
+      if (finalPrediction1.status !== "succeeded" && finalPrediction1.status !== "failed") {
+        finalPrediction1 = await replicate.predictions.get(prediction1.id);
+      }
+
+      if (finalPrediction2.status !== "succeeded" && finalPrediction2.status !== "failed") {
+        finalPrediction2 = await replicate.predictions.get(prediction2.id);
+      }
     }
 
-    if (finalPrediction.status === "failed") {
-      throw new Error("Prediction failed: " + (finalPrediction.error || "Unknown error"));
+    // Check if either prediction failed
+    if (finalPrediction1.status === "failed" && finalPrediction2.status === "failed") {
+      throw new Error("Both predictions failed");
     }
 
-    // Return the output URL - Flux Kontext Pro returns a single URI string
-    if (finalPrediction.output && typeof finalPrediction.output === "string") {
-      return finalPrediction.output;
-    } else {
-      throw new Error("No output received from prediction");
+    // Get the successful outputs
+    const image1Url =
+      finalPrediction1.status === "succeeded" && typeof finalPrediction1.output === "string"
+        ? finalPrediction1.output
+        : null;
+
+    const image2Url =
+      finalPrediction2.status === "succeeded" && typeof finalPrediction2.output === "string"
+        ? finalPrediction2.output
+        : null;
+
+    // If only one succeeded, return that one
+    if (!image1Url && image2Url) {
+      return {
+        winner: image2Url,
+        comparison: {
+          winner: "image2",
+          reason: "Only image2 generated successfully",
+          score1: 0,
+          score2: 8,
+          image1Url: null,
+          image2Url,
+        },
+      };
     }
+
+    if (image1Url && !image2Url) {
+      return {
+        winner: image1Url,
+        comparison: {
+          winner: "image1",
+          reason: "Only image1 generated successfully",
+          score1: 8,
+          score2: 0,
+          image1Url,
+          image2Url: null,
+        },
+      };
+    }
+
+    // If both succeeded, compare them
+    if (image1Url && image2Url) {
+      const comparison = await compareImages(image1Url, image2Url, prompt);
+      const winner = comparison.winner === "image1" ? image1Url : image2Url;
+
+      return {
+        winner,
+        comparison,
+      };
+    }
+
+    throw new Error("No output received from predictions");
   } catch (error) {
     console.error("Error generating image:", error);
     throw new Error("Failed to generate image");
